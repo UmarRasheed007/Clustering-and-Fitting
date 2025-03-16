@@ -18,9 +18,7 @@ def plot_relational_plot(df):
     plt.figure(figsize=(12, 10))
     sns.set_style("whitegrid")
 
-
     palette = sns.color_palette("viridis", n_colors=len(df["Crime type"].unique()))
-
 
     ax = sns.scatterplot(
         x="Longitude",
@@ -29,11 +27,11 @@ def plot_relational_plot(df):
         hue="Crime type",
         palette=palette,
         alpha=0.7,
-        s=50, 
+        s=50,
         edgecolor="none",
     )
 
-    if len(df) > 100:  
+    if len(df) > 100:
         sns.kdeplot(
             x=df["Longitude"],
             y=df["Latitude"],
@@ -41,7 +39,7 @@ def plot_relational_plot(df):
             fill=True,
             alpha=0.3,
             color="red",
-            ax=ax, 
+            ax=ax,
         )
 
     ax.set_title(
@@ -50,8 +48,8 @@ def plot_relational_plot(df):
     ax.set_xlabel("Longitude", fontsize=14, labelpad=10)
     ax.set_ylabel("Latitude", fontsize=14, labelpad=10)
 
-    ax.axhline(y=51.5074, color="blue", linestyle="--", alpha=0.5)  
-    ax.axvline(x=-0.1278, color="blue", linestyle="--", alpha=0.5) 
+    ax.axhline(y=51.5074, color="blue", linestyle="--", alpha=0.5)
+    ax.axvline(x=-0.1278, color="blue", linestyle="--", alpha=0.5)
     ax.text(
         -0.1278,
         51.5074,
@@ -144,7 +142,7 @@ def plot_categorical_plot(df):
 
         if len(crosstab) > 1:
             x_min, x_max = ax1.get_xlim()
-            if x_min == x_max: 
+            if x_min == x_max:
                 ax1.set_xlim(x_min - 0.5, x_max + 0.5)
     else:
         ax1.text(
@@ -185,11 +183,11 @@ def plot_categorical_plot(df):
         for i, crime in enumerate(crosstab.index):
             most_common = crosstab.loc[crime].idxmax()
             percentage = crosstab.loc[crime, most_common]
-            if percentage > 15:  
+            if percentage > 15:
                 ax1.annotate(
                     f"{percentage:.1f}%",
-                    xy=(i, percentage / 2),  
-                    xytext=(0, 0),  
+                    xy=(i, percentage / 2),
+                    xytext=(0, 0),
                     textcoords="offset points",
                     ha="center",
                     va="center",
@@ -202,7 +200,7 @@ def plot_categorical_plot(df):
             total_count = df[df["Crime type"] == crime].shape[0]
             ax1.annotate(
                 f"n={total_count}",
-                xy=(i, 102),  
+                xy=(i, 102),
                 ha="center",
                 fontsize=11,
                 fontweight="bold",
@@ -211,7 +209,7 @@ def plot_categorical_plot(df):
             )
 
     if "LSOA name" in df.columns:
-        
+
         top_locations = df["LSOA name"].value_counts().nlargest(5).index
 
         heatmap_data = pd.crosstab(
@@ -350,8 +348,8 @@ def plot_statistical_plot(df):
     Focuses on daily patterns, crime type distributions, and daily variations.
     """
 
-    fig = plt.figure(figsize=(25, 20))  
-    gs = GridSpec(2, 2, figure=fig) 
+    fig = plt.figure(figsize=(25, 20))
+    gs = GridSpec(2, 2, figure=fig)
 
     if "Month" in df.columns and not pd.api.types.is_datetime64_any_dtype(df["Month"]):
         df["Month"] = pd.to_datetime(df["Month"])
@@ -360,7 +358,6 @@ def plot_statistical_plot(df):
         if "Month" in df.columns and len(df["Month"].dt.day.unique()) > 1:
             df["Day"] = df["Month"].dt.day
             df["DayOfWeek"] = df["Month"].dt.day_name()
-
 
     ax1 = fig.add_subplot(gs[0, 0])
 
@@ -448,7 +445,7 @@ def plot_statistical_plot(df):
             df["Hour"] = df["Month"].dt.hour
         else:
 
-            np.random.seed(42)  
+            np.random.seed(42)
             df["Hour"] = np.random.randint(0, 24, size=len(df))
 
     if "DayOfWeek" not in df.columns and "Month" in df.columns:
@@ -483,7 +480,6 @@ def plot_statistical_plot(df):
             cbar_kws={"label": "Number of Incidents"},
             linewidths=0.5,
         )
-
 
         ax3.set_title(
             "Crime Frequency by Day and Hour", fontsize=14, fontweight="bold", pad=10
@@ -736,7 +732,7 @@ def preprocessing(df):
         print("\nNo numeric columns for correlation analysis")
 
     for col in categorical_cols:
-        if len(df[col].unique()) < 15:  
+        if len(df[col].unique()) < 15:
             print(df[col].value_counts(normalize=True).head(10))
 
     return df
@@ -797,7 +793,7 @@ def perform_clustering(df, col1, col2):
         Plot the elbow method to determine the optimal number of clusters.
         Uses data sampling for large datasets to improve performance.
         """
-        sample_size = 2000  
+        sample_size = 2000
         if len(data) > sample_size:
             np.random.seed(42)
             sample_indices = np.random.choice(len(data), sample_size, replace=False)
@@ -808,14 +804,12 @@ def perform_clustering(df, col1, col2):
         else:
             data_sample = data
 
-        max_clusters = min(11, len(data_sample)) 
+        max_clusters = min(11, len(data_sample))
         sse = []
         silhouette_scores = []
         range_of_k = range(2, max_clusters)
 
-        use_silhouette = (
-            len(data_sample) <= 10000
-        ) 
+        use_silhouette = len(data_sample) <= 10000
 
         for k in range_of_k:
             kmeans = KMeans(
@@ -824,7 +818,7 @@ def perform_clustering(df, col1, col2):
             kmeans.fit(data_sample)
             sse.append(kmeans.inertia_)
 
-            if use_silhouette and k > 1: 
+            if use_silhouette and k > 1:
                 labels = kmeans.predict(data_sample)
                 try:
                     if len(data_sample) > 5000:
@@ -866,17 +860,14 @@ def perform_clustering(df, col1, col2):
         ax1.set_ylabel("Sum of Squared Errors (SSE)", fontsize=12)
         ax1.grid(True, linestyle="--", alpha=0.7)
 
-
         if len(sse) > 2:
             diffs = np.diff(sse)
-            diffs_norm = diffs / np.abs(diffs).mean()  
+            diffs_norm = diffs / np.abs(diffs).mean()
 
-            elbow_point = 2  
+            elbow_point = 2
             for i in range(1, len(diffs_norm)):
-                if (
-                    diffs_norm[i] > 0.7 * diffs_norm[i - 1]
-                ): 
-                    elbow_point = i + 2  
+                if diffs_norm[i] > 0.7 * diffs_norm[i - 1]:
+                    elbow_point = i + 2
                     break
         else:
             elbow_point = 2
@@ -904,9 +895,7 @@ def perform_clustering(df, col1, col2):
             ax2.set_ylabel("Silhouette Score", fontsize=12)
             ax2.grid(True, linestyle="--", alpha=0.7)
 
-            best_k_silhouette = range_of_k[
-                np.argmax(silhouette_scores) + 1
-            ]  
+            best_k_silhouette = range_of_k[np.argmax(silhouette_scores) + 1]
             ax2.axvline(
                 x=best_k_silhouette,
                 color="red",
@@ -921,7 +910,7 @@ def perform_clustering(df, col1, col2):
                 xy=(
                     best_k_silhouette,
                     silhouette_scores[best_k_silhouette - 3],
-                ), 
+                ),
                 xytext=(
                     best_k_silhouette + 0.5,
                     silhouette_scores[best_k_silhouette - 3] * 0.9,
@@ -931,14 +920,13 @@ def perform_clustering(df, col1, col2):
 
         ax1.annotate(
             f"Suggested k={elbow_point}",
-            xy=(elbow_point, sse[elbow_point - 2]),  
+            xy=(elbow_point, sse[elbow_point - 2]),
             xytext=(elbow_point + 0.5, sse[elbow_point - 2] * 1.1),
             arrowprops=dict(facecolor="black", shrink=0.05, width=1.5),
         )
 
         ax1.legend(loc="best")
 
-        
         textstr = "\n".join(
             [
                 "Methodology:",
@@ -957,11 +945,11 @@ def perform_clustering(df, col1, col2):
         plt.savefig("elbow_plot.png", dpi=300, bbox_inches="tight")
         plt.close(fig)
 
-        if use_silhouette and max(silhouette_scores) > 0.5:  
+        if use_silhouette and max(silhouette_scores) > 0.5:
             return best_k_silhouette
         else:
             if len(data) > 10000 and elbow_point > 5:
-                return min(5, elbow_point)  
+                return min(5, elbow_point)
             return elbow_point
 
     def one_silhouette_inertia(data, n_clusters):
@@ -973,7 +961,7 @@ def perform_clustering(df, col1, col2):
             n_clusters=n_clusters,
             random_state=42,
             n_init=10,
-            max_iter=300,  
+            max_iter=300,
             tol=1e-4,
         )
         labels = kmeans.fit_predict(data)
@@ -1002,7 +990,7 @@ def perform_clustering(df, col1, col2):
 
     data = df[[col1, col2]].dropna()
 
-    if len(data) < 3:  
+    if len(data) < 3:
         raise ValueError("Not enough data points for clustering after removing NAs")
 
     max_analysis_size = 20000
@@ -1084,7 +1072,7 @@ def plot_clustered_data(labels, data, xkmeans, ykmeans, centre_labels):
     cmap = plt.get_cmap("viridis", len(np.unique(labels)))
     colors = [cmap(i) for i in range(len(np.unique(labels)))]
 
-    max_display_points = 5000  
+    max_display_points = 5000
     if len(data) > max_display_points:
         print(
             f"Sampling {max_display_points} points for visualization (out of {len(data)})"
@@ -1092,9 +1080,9 @@ def plot_clustered_data(labels, data, xkmeans, ykmeans, centre_labels):
         display_indices = []
         for label in unique_labels:
             label_indices = np.where(labels == label)[0]
-            
+
             sample_size = int(len(label_indices) * (max_display_points / len(data)))
-            if sample_size < 10:  
+            if sample_size < 10:
                 sample_size = min(10, len(label_indices))
             if sample_size > 0:
                 sampled_indices = np.random.choice(
@@ -1102,10 +1090,8 @@ def plot_clustered_data(labels, data, xkmeans, ykmeans, centre_labels):
                 )
                 display_indices.extend(sampled_indices)
 
-
         plot_data = data.iloc[display_indices]
         plot_labels = labels[display_indices]
-
 
         ax.text(
             0.5,
@@ -1241,7 +1227,6 @@ def perform_fitting(df, col1, col2):
     x = data[col1].values.reshape(-1, 1)
     y = data[col2].values
 
-
     print(f"Fitting linear regression model on {len(data)} points")
     model = LinearRegression()
     model.fit(x, y)
@@ -1252,13 +1237,13 @@ def perform_fitting(df, col1, col2):
     rmse = np.sqrt(mse)
 
     n = len(x)
-    p = 1  
-    dof = n - p - 1  
+    p = 1
+    dof = n - p - 1
 
     x_pred = np.linspace(x.min(), x.max(), 100).reshape(-1, 1)
     y_pred = model.predict(x_pred)
 
-    t_critical = ss.t.ppf(0.975, dof) 
+    t_critical = ss.t.ppf(0.975, dof)
     std_errors = np.zeros(len(x_pred))
 
     model_parameters = {
@@ -1301,7 +1286,7 @@ def plot_fitted_data(data, x, y, model_params=None):
 
     fig, ax = plt.subplots(figsize=(14, 10))
 
-    max_display_points = 5000 
+    max_display_points = 5000
     if len(data) > max_display_points:
         print(
             f"Sampling {max_display_points} points for visualization (out of {len(data)})"
