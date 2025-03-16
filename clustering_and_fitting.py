@@ -43,10 +43,7 @@ def plot_relational_plot(df):
         )
 
     ax.set_title(
-        "Geographic Distribution of Crime Types",
-        fontsize=18, 
-        fontweight="bold", 
-        pad=20
+        "Geographic Distribution of Crime Types", fontsize=18, fontweight="bold", pad=20
     )
     ax.set_xlabel("Longitude", fontsize=14, labelpad=10)
     ax.set_ylabel("Latitude", fontsize=14, labelpad=10)
@@ -63,20 +60,8 @@ def plot_relational_plot(df):
         bbox=dict(facecolor="white", alpha=0.7, boxstyle="round,pad=0.5"),
     )
 
-    ax.tick_params(
-        axis="both", 
-        which="major", 
-        labelsize=12, 
-        length=5, 
-        width=1.5
-        )
-    ax.tick_params(
-        axis="both", 
-        which="minor", 
-        labelsize=10, 
-        length=3, 
-        width=1
-        )
+    ax.tick_params(axis="both", which="major", labelsize=12, length=5, width=1.5)
+    ax.tick_params(axis="both", which="minor", labelsize=10, length=3, width=1)
 
     crime_counts = df["Crime type"].value_counts()
     handles, labels = ax.get_legend_handles_labels()
@@ -175,20 +160,9 @@ def plot_categorical_plot(df):
     ax1.set_xlabel("Crime Type", fontsize=14, labelpad=10)
     ax1.set_ylabel("Percentage of Cases (%)", fontsize=14, labelpad=10)
 
-    ax1.tick_params(
-        axis="x", 
-        labelrotation=45, 
-        labelsize=12, 
-        length=5, 
-        width=1
-        )
-    
-    ax1.tick_params(
-        axis="y", 
-        labelsize=12, 
-        length=5, 
-        width=1
-        )
+    ax1.tick_params(axis="x", labelrotation=45, labelsize=12, length=5, width=1)
+
+    ax1.tick_params(axis="y", labelsize=12, length=5, width=1)
 
     ax1.grid(axis="y", linestyle="--", alpha=0.7)
 
@@ -318,11 +292,7 @@ def plot_categorical_plot(df):
                 ax2.set_xlabel("Month", fontsize=14, labelpad=10)
                 ax2.set_ylabel("Percentage (%)", fontsize=14, labelpad=10)
                 ax2.grid(axis="y", linestyle="--", alpha=0.7)
-                ax2.tick_params(
-                    axis="x", 
-                    labelrotation=45, 
-                    labelsize=12
-                    )
+                ax2.tick_params(axis="x", labelrotation=45, labelsize=12)
             else:
                 ax2.text(
                     0.5,
@@ -416,16 +386,8 @@ def plot_statistical_plot(df):
                 fontsize=9,
             )
 
-    ax1.set_title(
-        "Distribution of Crime Types", 
-        fontsize=14, 
-        fontweight="bold", 
-        pad=10
-        )
-    ax1.set_xlabel(
-        "Number of Incidents", 
-        fontsize=12
-        )
+    ax1.set_title("Distribution of Crime Types", fontsize=14, fontweight="bold", pad=10)
+    ax1.set_xlabel("Number of Incidents", fontsize=12)
     ax1.set_ylabel("")
     ax1.grid(axis="x", linestyle="--", alpha=0.7)
 
@@ -433,10 +395,7 @@ def plot_statistical_plot(df):
 
     if "Last outcome category" in df.columns:
         outcome_dist = (
-            df["Last outcome category"]
-            .value_counts()
-            .nlargest(8)
-            .reset_index()
+            df["Last outcome category"].value_counts().nlargest(8).reset_index()
         )
         outcome_dist.columns = ["Outcome", "Count"]
 
@@ -461,10 +420,7 @@ def plot_statistical_plot(df):
             )
 
         ax2.set_title(
-            "Crime Outcome Distribution", 
-            fontsize=14, 
-            fontweight="bold", 
-            pad=10
+            "Crime Outcome Distribution", fontsize=14, fontweight="bold", pad=10
         )
         ax2.set_xlabel("Number of Cases", fontsize=12)
         ax2.set_ylabel("")
