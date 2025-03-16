@@ -43,7 +43,10 @@ def plot_relational_plot(df):
         )
 
     ax.set_title(
-        "Geographic Distribution of Crime Types", fontsize=18, fontweight="bold", pad=20
+        "Geographic Distribution of Crime Types",
+        fontsize=18, 
+        fontweight="bold", 
+        pad=20
     )
     ax.set_xlabel("Longitude", fontsize=14, labelpad=10)
     ax.set_ylabel("Latitude", fontsize=14, labelpad=10)
