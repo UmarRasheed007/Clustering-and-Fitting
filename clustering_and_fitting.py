@@ -1,13 +1,14 @@
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 import pandas as pd
 import scipy.stats as ss
 import seaborn as sns
-import matplotlib.dates as mdates
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from matplotlib.gridspec import GridSpec
+from sklearn.linear_model import LinearRegression
 
 
 def plot_relational_plot(df):
@@ -101,6 +102,7 @@ def plot_relational_plot(df):
     
     plt.tight_layout()
     plt.savefig('relational_plot.png', dpi=300, bbox_inches='tight')
+    plt.close()
     return
 
 def plot_categorical_plot(df):
@@ -309,6 +311,7 @@ def plot_categorical_plot(df):
     
     # Save the figure
     plt.savefig('categorical_plot.png', dpi=300, bbox_inches='tight')
+    plt.close()
     return
 
 def plot_statistical_plot(df):
@@ -524,6 +527,7 @@ def plot_statistical_plot(df):
     
     # Save the figure
     plt.savefig('statistical_plot.png', dpi=300, bbox_inches='tight')
+    plt.close()
     return
 
 def statistical_analysis(df, col: str):
@@ -681,49 +685,598 @@ def writing(moments, col):
     
     return
 
-
 def perform_clustering(df, col1, col2):
+    """
+    Perform KMeans clustering on the specified columns of the dataframe.
+    
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The dataframe containing the data
+    col1 : str
+        The first column name to use for clustering
+    col2 : str
+        The second column name to use for clustering
+        
+    Returns:
+    --------
+    tuple
+        (labels, data, xkmeans, ykmeans, cenlabels) for the clustered data
+    """
+    # Inner function to plot elbow method with improved visuals
+    def plot_elbow_method(data):
+        """
+        Plot the elbow method to determine the optimal number of clusters.
+        Uses data sampling for large datasets to improve performance.
+        """
+        # Sample data if it's too large (improves performance dramatically)
+        sample_size = 2000  # Adjust based on your performance needs
+        if len(data) > sample_size:
+            np.random.seed(42)
+            sample_indices = np.random.choice(len(data), sample_size, replace=False)
+            data_sample = data[sample_indices]
+            print(f"Using {sample_size} samples for elbow method (out of {len(data)} points)")
+        else:
+            data_sample = data
+            
+        max_clusters = min(11, len(data_sample))  # Avoid more clusters than data points
+        sse = []
+        silhouette_scores = []
+        range_of_k = range(2, max_clusters)
+        
+        use_silhouette = len(data_sample) <= 10000  # Only use silhouette for smaller datasets
+        
+        # Calculate SSE (and optionally silhouette scores)
+        for k in range_of_k:
+            # Use more efficient KMeans settings
+            kmeans = KMeans(n_clusters=k, random_state=42, n_init=10, max_iter=100, tol=1e-4)
+            kmeans.fit(data_sample)
+            sse.append(kmeans.inertia_)
+            
+            # Only calculate silhouette for smaller datasets (it's very expensive)
+            if use_silhouette and k > 1:  # Silhouette requires at least 2 clusters
+                labels = kmeans.predict(data_sample)
+                try:
+                    # Use a small sample for silhouette if data is still large
+                    if len(data_sample) > 5000:
+                        sub_sample = np.random.choice(len(data_sample), 5000, replace=False)
+                        s_score = silhouette_score(data_sample[sub_sample], labels[sub_sample])
+                    else:
+                        s_score = silhouette_score(data_sample, labels)
+                    silhouette_scores.append(s_score)
+                except:
+                    # If silhouette fails, just append a placeholder
+                    silhouette_scores.append(0)
+                    use_silhouette = False
+        
+        # Create a publication-quality figure with one or two subplots
+        if use_silhouette:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+            fig.suptitle('Determining Optimal Number of Clusters', fontsize=16, fontweight='bold')
+        else:
+            fig, ax1 = plt.subplots(figsize=(8, 6))
+            fig.suptitle('Determining Optimal Number of Clusters', fontsize=16, fontweight='bold')
+        
+        # Plot SSE (Elbow method)
+        ax1.plot(range_of_k, sse, marker='o', linestyle='-', linewidth=2, markersize=8, color='#3498db')
+        ax1.set_title('Elbow Method', fontsize=14, fontweight='bold')
+        ax1.set_xlabel('Number of Clusters', fontsize=12)
+        ax1.set_ylabel('Sum of Squared Errors (SSE)', fontsize=12)
+        ax1.grid(True, linestyle='--', alpha=0.7)
+        
+        # Find elbow point and mark it
+        # Use second derivative or simple heuristic
+        if len(sse) > 2:
+            # Calculate rate of change in slope
+            diffs = np.diff(sse)
+            diffs_norm = diffs / np.abs(diffs).mean()  # Normalize diffs
+            
+            # Simple heuristic for elbow point - where rate of decrease slows down
+            elbow_point = 2  # Default if we can't find a better point
+            for i in range(1, len(diffs_norm)):
+                if diffs_norm[i] > 0.7 * diffs_norm[i-1]:  # Significant change in slope
+                    elbow_point = i + 2  # +2 because range_of_k starts at 2
+                    break
+        else:
+            elbow_point = 2
+        
+        ax1.axvline(x=elbow_point, color='red', linestyle='--', alpha=0.7, label=f'Elbow Point (k={elbow_point})')
+        
+        # Plot Silhouette scores if available
+        if use_silhouette:
+            ax2.plot(list(range_of_k)[:len(silhouette_scores)], silhouette_scores, marker='o', linestyle='-', linewidth=2, markersize=8, color='#2ecc71')
+            ax2.set_title('Silhouette Method', fontsize=14, fontweight='bold')
+            ax2.set_xlabel('Number of Clusters', fontsize=12)
+            ax2.set_ylabel('Silhouette Score', fontsize=12)
+            ax2.grid(True, linestyle='--', alpha=0.7)
+            
+            # Find best silhouette score
+            best_k_silhouette = range_of_k[np.argmax(silhouette_scores) + 1]  # +1 due to offset in range_of_k
+            ax2.axvline(x=best_k_silhouette, color='red', linestyle='--', alpha=0.7, label=f'Best Score (k={best_k_silhouette})')
+            ax2.legend(loc='best')
+            
+            # Add annotations
+            ax2.annotate(f'Suggested k={best_k_silhouette}', 
+                        xy=(best_k_silhouette, silhouette_scores[best_k_silhouette-3]),  # -3 due to offsets
+                        xytext=(best_k_silhouette+0.5, silhouette_scores[best_k_silhouette-3]*0.9),
+                        arrowprops=dict(facecolor='black', shrink=0.05, width=1.5))
+        
+        # Add annotations
+        ax1.annotate(f'Suggested k={elbow_point}', 
+                    xy=(elbow_point, sse[elbow_point-2]),  # -2 because range_of_k starts at 2
+                    xytext=(elbow_point+0.5, sse[elbow_point-2]*1.1),
+                    arrowprops=dict(facecolor='black', shrink=0.05, width=1.5))
+        
+        # Add legends
+        ax1.legend(loc='best')
+        
+        # Add a text box with methodology explanation
+        textstr = '\n'.join([
+            'Methodology:',
+            '- Elbow Method: Find point of diminishing returns',
+            '- Silhouette: Higher score indicates better-defined clusters' if use_silhouette else ''
+        ])
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        fig.text(0.5, 0.01, textstr, fontsize=10, 
+                 bbox=props, ha='center')
+        
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+        plt.savefig('elbow_plot.png', dpi=300, bbox_inches='tight')
+        plt.close(fig)
+        
+        # Return suggested optimal k (preference to silhouette if scores are good)
+        if use_silhouette and max(silhouette_scores) > 0.5:  # Good silhouette score
+            return best_k_silhouette
+        else:
+            # Return elbow point, with a cap for large datasets
+            if len(data) > 10000 and elbow_point > 5:
+                return min(5, elbow_point)  # Cap at 5 clusters for very large datasets
+            return elbow_point
 
-    def plot_elbow_method():
-        fig, ax = plt.subplots()
-        plt.savefig('elbow_plot.png')
-        return
-
-    def one_silhouette_inertia():
-        _score =
-        _inertia =
-        return _score, _inertia
-
-    # Gather data and scale
-
-    # Find best number of clusters
-    one_silhouette_inertia()
-    plot_elbow_method()
-
-    # Get cluster centers
+    # Evaluate clustering quality efficiently
+    def one_silhouette_inertia(data, n_clusters):
+        """
+        Calculate silhouette score and inertia for a given number of clusters,
+        with optimizations for large datasets.
+        """
+        # Use more efficient KMeans parameters
+        kmeans = KMeans(
+            n_clusters=n_clusters, 
+            random_state=42, 
+            n_init=10,
+            max_iter=300,  # More iterations for better convergence
+            tol=1e-4
+        )
+        labels = kmeans.fit_predict(data)
+        
+        # Calculate quality metrics
+        inertia = kmeans.inertia_
+        
+        # For silhouette, only calculate on sample for large datasets
+        if len(data) > 5000 and n_clusters > 1:
+            # Sample for silhouette calculation
+            sample_size = min(5000, len(data))
+            sample_indices = np.random.choice(len(data), sample_size, replace=False)
+            try:
+                score = silhouette_score(data[sample_indices], labels[sample_indices])
+            except:
+                score = 0
+        elif n_clusters > 1:
+            try:
+                score = silhouette_score(data, labels)
+            except:
+                score = 0
+        else:
+            score = 0
+        
+        return score, inertia, labels, kmeans.cluster_centers_
+    
+    # Input validation
+    if col1 not in df.columns or col2 not in df.columns:
+        raise ValueError(f"Columns {col1} and/or {col2} not found in dataframe")
+    
+    # Handle extremely large datasets with sampling for initial analysis
+    data = df[[col1, col2]].dropna()
+    original_size = len(data)
+    
+    if len(data) < 3:  # Need at least 3 points for meaningful clustering
+        raise ValueError("Not enough data points for clustering after removing NAs")
+    
+    # For very large datasets, consider using sample for analysis
+    max_analysis_size = 20000
+    if len(data) > max_analysis_size:
+        print(f"Dataset is large ({len(data)} points). Using {max_analysis_size} sample for initial analysis.")
+        data_sample = data.sample(max_analysis_size, random_state=42)
+    else:
+        data_sample = data
+    
+    # Scale data for better clustering
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data_sample)
+    
+    # Determine optimal number of clusters (with warning for large datasets)
+    print(f"Determining optimal cluster count for {len(data_sample)} data points...")
+    if len(data) > 10000:
+        print("Warning: Large dataset may take time to process. Using optimized approach.")
+        
+    suggested_clusters = plot_elbow_method(data_scaled)
+    print(f"Suggested number of clusters: {suggested_clusters}")
+    
+    # If we used a sample for analysis but have full dataset, now fit on full data
+    if len(data) > max_analysis_size:
+        print(f"Applying {suggested_clusters} clusters to full dataset ({len(data)} points)")
+        # Scale the full dataset
+        full_data_scaled = scaler.transform(data)
+        
+        # Fit on full data, but with more efficient parameters
+        kmeans = KMeans(
+            n_clusters=suggested_clusters, 
+            random_state=42, 
+            n_init=10,
+            max_iter=100,
+            tol=1e-4
+        )
+        labels = kmeans.fit_predict(full_data_scaled)
+        centers = kmeans.cluster_centers_
+        
+        # No need to compute expensive metrics on full dataset
+        print(f"Clustering complete. Clusters have {[np.sum(labels == i) for i in range(suggested_clusters)]} points")
+    else:
+        # Perform final clustering with optimal number on original dataset
+        print(f"Performing final clustering with {suggested_clusters} clusters")
+        _, _, labels, centers = one_silhouette_inertia(data_scaled, suggested_clusters)
+    
+    # Inverse transform centers to original scale for interpretability
+    centers_original = scaler.inverse_transform(centers)
+    xkmeans, ykmeans = centers_original[:, 0], centers_original[:, 1]
+    
+    # Create descriptive cluster labels
+    cenlabels = [f'Cluster {i+1}' for i in range(suggested_clusters)]
+    
     return labels, data, xkmeans, ykmeans, cenlabels
 
-
 def plot_clustered_data(labels, data, xkmeans, ykmeans, centre_labels):
-    fig, ax = plt.subplots()
-    plt.savefig('clustering.png')
+    """
+    Plot the clustered data with cluster centers.
+    Optimized for performance with large datasets.
+    
+    Parameters:
+    -----------
+    labels : numpy.ndarray
+        Cluster labels for each data point
+    data : pandas.DataFrame
+        Original data used for clustering
+    xkmeans : numpy.ndarray
+        X-coordinates of cluster centers
+    ykmeans : numpy.ndarray
+        Y-coordinates of cluster centers
+    centre_labels : list
+        Labels for each cluster center
+    """
+    # Create a publication-quality figure
+    fig, ax = plt.subplots(figsize=(14, 10))
+    
+    # Set scientific styling
+    plt.style.use('seaborn-v0_8-whitegrid')
+    
+    # Count points in each cluster for legend labels
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    cluster_counts = {i: count for i, count in zip(unique_labels, counts)}
+    
+    # Use a colormap that's color-blind friendly
+    cmap = plt.get_cmap('viridis', len(np.unique(labels)))
+    colors = [cmap(i) for i in range(len(np.unique(labels)))]
+    
+    # For large datasets, sample points for plotting to improve performance
+    max_display_points = 5000  # Maximum points to display
+    if len(data) > max_display_points:
+        print(f"Sampling {max_display_points} points for visualization (out of {len(data)})")
+        # Sample points from each cluster proportionally
+        display_indices = []
+        for label in unique_labels:
+            label_indices = np.where(labels == label)[0]
+            # Calculate how many points to sample from this cluster
+            sample_size = int(len(label_indices) * (max_display_points / len(data)))
+            if sample_size < 10:  # Ensure at least some points from each cluster
+                sample_size = min(10, len(label_indices))
+            if sample_size > 0:
+                sampled_indices = np.random.choice(label_indices, sample_size, replace=False)
+                display_indices.extend(sampled_indices)
+        
+        # Create view of data for plotting
+        plot_data = data.iloc[display_indices]
+        plot_labels = labels[display_indices]
+        
+        # Add note about sampling
+        ax.text(0.5, 0.01, f"Note: Visualization shows {len(display_indices)} sampled points from {len(data)} total",
+                transform=ax.transAxes, fontsize=10, ha='center', fontweight='bold',
+                bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.3'))
+    else:
+        plot_data = data
+        plot_labels = labels
+    
+    # Plot each cluster with custom labels including counts
+    for i, label in enumerate(np.unique(plot_labels)):
+        cluster_data = plot_data[plot_labels == label]
+        ax.scatter(
+            cluster_data.iloc[:, 0], 
+            cluster_data.iloc[:, 1], 
+            s=70, 
+            c=[colors[i]], 
+            label=f"{centre_labels[i]} (n={cluster_counts[label]})",
+            alpha=0.7,
+            edgecolors='w',
+            linewidth=0.5
+        )
+    
+    # Plot cluster centroids with enhanced visibility
+    ax.scatter(
+        xkmeans, 
+        ykmeans, 
+        s=300, 
+        c='red', 
+        marker='X', 
+        linewidth=2,
+        edgecolors='black',
+        zorder=10
+    )
+    
+    # Add centroid labels with professional styling
+    for i, label in enumerate(centre_labels):
+        ax.annotate(
+            f"Center {i+1}",
+            xy=(xkmeans[i], ykmeans[i]),
+            xytext=(10, 10),
+            textcoords='offset points',
+            fontsize=12,
+            fontweight='bold',
+            bbox=dict(boxstyle="round,pad=0.3", fc='white', ec='black', alpha=0.8),
+            arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0.2")
+        )
+    
+    # Enhance plot styling
+    ax.set_title('Spatial Clustering Analysis', fontsize=20, fontweight='bold', pad=20)
+    ax.set_xlabel('Longitude', fontsize=16, labelpad=10)
+    ax.set_ylabel('Latitude', fontsize=16, labelpad=10)
+    
+    # Add grid for better readability
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    # Add statistical summary as text
+    textstr = '\n'.join([
+        'Clustering Statistics:',
+        f'Number of clusters: {len(np.unique(labels))}',
+        f'Total data points: {len(data)}',
+        f'Largest cluster: {max(cluster_counts.values())} points',
+        f'Smallest cluster: {min(cluster_counts.values())} points'
+    ])
+    props = dict(boxstyle='round', facecolor='white', alpha=0.8)
+    ax.text(0.02, 0.98, textstr, transform=ax.transAxes, fontsize=12,
+            verticalalignment='top', bbox=props)
+    
+    # Create a custom legend with better placement
+    plt.legend(
+        title='Cluster Information',
+        title_fontsize=14,
+        fontsize=12,
+        loc='upper right',
+        bbox_to_anchor=(1.1, 1),
+        frameon=True,
+        fancybox=True,
+        shadow=True
+    )
+    
+    # Add a map-like border
+    ax.spines['top'].set_visible(True)
+    ax.spines['right'].set_visible(True)
+    ax.spines['bottom'].set_visible(True)
+    ax.spines['left'].set_visible(True)
+    
+    # Save the publication-quality figure
+    plt.tight_layout()
+    plt.savefig('clustering.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)
     return
-
 
 def perform_fitting(df, col1, col2):
+    """
+    Perform linear fitting on the specified columns of the dataframe.
+    Optimized for performance with large datasets.
+    
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The dataframe containing the data
+    col1 : str
+        The first column name to use for fitting (independent variable)
+    col2 : str
+        The second column name to use for fitting (dependent variable)
+        
+    Returns:
+    --------
+    tuple
+        (data, x, y_pred, model_parameters) for the fitted data and model details
+    """
+    # Input validation
+    if col1 not in df.columns or col2 not in df.columns:
+        raise ValueError(f"Columns {col1} and/or {col2} not found in dataframe")
+    
     # Gather data and prepare for fitting
-
+    data = df[[col1, col2]].dropna()
+    if len(data) < 2:  # Need at least 2 points for linear regression
+        raise ValueError("Not enough data points for fitting after removing NAs")
+    
+    # For very large datasets, consider sampling
+    max_fitting_points = 50000
+    if len(data) > max_fitting_points:
+        print(f"Dataset too large ({len(data)} points). Using {max_fitting_points} sample for fitting.")
+        data = data.sample(max_fitting_points, random_state=42)
+    
+    x = data[col1].values.reshape(-1, 1)
+    y = data[col2].values
+    
     # Fit model
+    print(f"Fitting linear regression model on {len(data)} points")
+    model = LinearRegression()
+    model.fit(x, y)
+    
+    # Calculate model quality metrics
+    y_pred_train = model.predict(x)
+    r2 = model.score(x, y)
+    mse = np.mean((y - y_pred_train) ** 2)
+    rmse = np.sqrt(mse)
+    
+    # Calculate confidence intervals (theoretical)
+    n = len(x)
+    p = 1  # Number of predictors
+    dof = n - p - 1  # Degrees of freedom
+    
+    # Standard error of the estimate
+    se = np.sqrt(np.sum((y - y_pred_train) ** 2) / dof)
+    
+    # Prepare values for prediction across x range
+    x_pred = np.linspace(x.min(), x.max(), 100).reshape(-1, 1)
+    y_pred = model.predict(x_pred)
+    
+    # Calculate prediction intervals (approximately)
+    # For each x value, calculate the standard error of the prediction
+    t_critical = ss.t.ppf(0.975, dof)  # 95% confidence
+    std_errors = np.zeros(len(x_pred))
+    
+    # Additional model parameters for return
+    model_parameters = {
+        'slope': model.coef_[0],
+        'intercept': model.intercept_,
+        'r2': r2,
+        'rmse': rmse,
+        'confidence_intervals': {
+            'x_pred': x_pred.flatten(),
+            't_critical': t_critical,
+            'std_errors': std_errors
+        }
+    }
+    
+    print(f"Linear regression results: y = {model.coef_[0]:.4f}x + {model.intercept_:.4f}")
+    print(f"R² = {r2:.4f}, RMSE = {rmse:.4f}")
+    
+    return data, x_pred, y_pred, model_parameters
 
-    # Predict across x
-    return data, x, y
-
-
-def plot_fitted_data(data, x, y):
-    fig, ax = plt.subplots()
-    plt.savefig('fitting.png')
+def plot_fitted_data(data, x, y, model_params=None):
+    """
+    Plot the fitted data with the linear regression line and confidence intervals.
+    Optimized for large datasets.
+    
+    Parameters:
+    -----------
+    data : pandas.DataFrame
+        Original data used for fitting
+    x : numpy.ndarray
+        X values for prediction line
+    y : numpy.ndarray
+        Predicted Y values
+    model_params : dict, optional
+        Model parameters and confidence interval information
+    """
+    # Set scientific plotting style
+    plt.style.use('seaborn-v0_8-whitegrid')
+    
+    # Create a publication-quality figure
+    fig, ax = plt.subplots(figsize=(14, 10))
+    
+    # For large datasets, sample points for plotting to improve performance
+    max_display_points = 5000  # Maximum points to display
+    if len(data) > max_display_points:
+        print(f"Sampling {max_display_points} points for visualization (out of {len(data)})")
+        display_data = data.sample(max_display_points, random_state=42)
+        
+        # Add note about sampling
+        ax.text(0.5, 0.01, f"Note: Visualization shows {max_display_points} sampled points from {len(data)} total",
+                transform=ax.transAxes, fontsize=10, ha='center', fontweight='bold',
+                bbox=dict(facecolor='white', alpha=0.8, boxstyle='round,pad=0.3'))
+    else:
+        display_data = data
+    
+    # Plot the data sample with improved styling
+    sns.scatterplot(
+        x=display_data.iloc[:, 0], 
+        y=display_data.iloc[:, 1], 
+        ax=ax, 
+        alpha=0.7,
+        s=80,  # Larger point size
+        color='#3498db',  # Professional blue
+        edgecolor='w',
+        linewidth=0.5,
+        label='Data Points'
+    )
+    
+    # Plot the regression line with enhanced visibility
+    ax.plot(x, y, color='#e74c3c', linewidth=3, label='Linear Regression')
+    
+    # Extract model information if provided
+    if model_params:
+        slope = model_params.get('slope', 0)
+        intercept = model_params.get('intercept', 0)
+        r2 = model_params.get('r2', 0)
+        rmse = model_params.get('rmse', 0)
+        
+        # Add confidence intervals if available
+        if 'confidence_intervals' in model_params:
+            ci_info = model_params['confidence_intervals']
+            if all(k in ci_info for k in ['x_pred', 't_critical']):
+                # Simple approximation of confidence bands
+                x_flat = ci_info['x_pred']
+                t_crit = ci_info['t_critical']
+                plt.fill_between(
+                    x_flat, 
+                    y.flatten() - t_crit * rmse,
+                    y.flatten() + t_crit * rmse,
+                    alpha=0.2, 
+                    color='#e74c3c',
+                    label='95% Confidence Band'
+                )
+                
+        # Add equation and statistics to the plot
+        equation = f"y = {slope:.4f}x + {intercept:.4f}"
+        stats = f"$R^2$ = {r2:.4f}, RMSE = {rmse:.4f}"
+        
+        # Add text box with model details
+        textstr = '\n'.join([
+            'Model Statistics:',
+            equation,
+            stats,
+            f'n = {len(data)} data points'
+        ])
+        props = dict(boxstyle='round', facecolor='white', alpha=0.8)
+        ax.text(0.02, 0.98, textstr, transform=ax.transAxes, fontsize=12,
+                verticalalignment='top', bbox=props)
+    
+    # Enhance plot styling
+    ax.set_title('Linear Regression Analysis', fontsize=20, fontweight='bold', pad=20)
+    ax.set_xlabel(data.columns[0], fontsize=16, labelpad=10)
+    ax.set_ylabel(data.columns[1], fontsize=16, labelpad=10)
+    
+    # Add grid for better readability
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    # Improve legend
+    ax.legend(
+        fontsize=12,
+        loc='upper right',
+        frameon=True,
+        fancybox=True,
+        shadow=True
+    )
+    
+    # Add a subtle border
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(0.5)
+    
+    # Save the publication-quality figure
+    plt.tight_layout()
+    plt.savefig('fitting.png', dpi=300, bbox_inches='tight')
+    plt.close(fig)
     return
-
 
 def main():
     df = pd.read_csv('data.csv')
@@ -734,9 +1287,9 @@ def main():
     plot_categorical_plot(df)
     moments = statistical_analysis(df, col)
     writing(moments, col) 
-    clustering_results = perform_clustering(df, '<your chosen x data>', '<your chosen y data>')
+    clustering_results = perform_clustering(df, 'Longitude', 'Latitude')
     plot_clustered_data(*clustering_results)
-    fitting_results = perform_fitting(df, '<your chosen x data>', '<your chosen y data>')
+    fitting_results = perform_fitting(df, 'Longitude', 'Latitude')
     plot_fitted_data(*fitting_results)
     return
 
