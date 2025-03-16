@@ -18,7 +18,9 @@ def plot_relational_plot(df):
     plt.figure(figsize=(12, 10))
     sns.set_style("whitegrid")
 
-    palette = sns.color_palette("viridis", n_colors=len(df["Crime type"].unique()))
+    palette = sns.color_palette("viridis",
+                                n_colors=len(df["Crime type"].unique())
+                                )
 
     ax = sns.scatterplot(
         x="Longitude",
@@ -44,8 +46,8 @@ def plot_relational_plot(df):
 
     ax.set_title(
         "Geographic Distribution of Crime Types",
-        fontsize=18, 
-        fontweight="bold", 
+        fontsize=18,
+        fontweight="bold",
         pad=20
     )
     ax.set_xlabel("Longitude", fontsize=14, labelpad=10)
@@ -64,23 +66,25 @@ def plot_relational_plot(df):
     )
 
     ax.tick_params(
-        axis="both", 
-        which="major", 
-        labelsize=12, 
-        length=5, 
+        axis="both",
+        which="major",
+        labelsize=12,
+        length=5,
         width=1.5
         )
     ax.tick_params(
-        axis="both", 
-        which="minor", 
-        labelsize=10, 
-        length=3, 
+        axis="both",
+        which="minor",
+        labelsize=10,
+        length=3,
         width=1
         )
 
     crime_counts = df["Crime type"].value_counts()
     handles, labels = ax.get_legend_handles_labels()
-    updated_labels = [f"{label} ({crime_counts.get(label, 0)})" for label in labels]
+    updated_labels = [f"{label} ({crime_counts.get(label, 0)})"
+                      for label in labels
+                      ]
 
     plt.legend(
         handles=handles,
@@ -135,7 +139,8 @@ def plot_categorical_plot(df):
     1. Relationship between crime types and their outcomes
     2. Distribution of crime types by location
     """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 10), constrained_layout=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 10),
+                                   constrained_layout=True)
 
     top_crimes = df["Crime type"].value_counts().nlargest(5).index
     top_outcomes = df["Last outcome category"].value_counts().nlargest(6).index
@@ -147,13 +152,18 @@ def plot_categorical_plot(df):
 
     crosstab = (
         pd.crosstab(
-            plot_df["Crime type"], plot_df["Last outcome category"], normalize="index"
+            plot_df["Crime type"], plot_df["Last outcome category"],
+            normalize="index"
         )
         * 100
     )
 
     if not crosstab.empty:
-        crosstab.plot(kind="bar", stacked=True, ax=ax1, colormap="viridis", width=0.8)
+        crosstab.plot(kind="bar",
+                      stacked=True,
+                      ax=ax1,
+                      colormap="viridis",
+                      width=0.8)
 
         if len(crosstab) > 1:
             x_min, x_max = ax1.get_xlim()
@@ -170,23 +180,25 @@ def plot_categorical_plot(df):
         )
 
     ax1.set_title(
-        "Crime Resolution Outcomes by Type", fontsize=18, fontweight="bold", pad=20
+        "Crime Resolution Outcomes by Type",
+        fontsize=18,
+        fontweight="bold",
+        pad=20
     )
     ax1.set_xlabel("Crime Type", fontsize=14, labelpad=10)
     ax1.set_ylabel("Percentage of Cases (%)", fontsize=14, labelpad=10)
 
     ax1.tick_params(
-        axis="x", 
-        labelrotation=45, 
-        labelsize=12, 
-        length=5, 
+        axis="x",
+        labelrotation=45,
+        labelsize=12,
+        length=5,
         width=1
         )
-    
     ax1.tick_params(
-        axis="y", 
-        labelsize=12, 
-        length=5, 
+        axis="y",
+        labelsize=12,
+        length=5,
         width=1
         )
 
@@ -232,7 +244,10 @@ def plot_categorical_plot(df):
                 fontsize=11,
                 fontweight="bold",
                 color="black",
-                bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, pad=2),
+                bbox=dict(facecolor="white",
+                          edgecolor="none",
+                          alpha=0.7,
+                          pad=2),
             )
 
     if "LSOA name" in df.columns:
@@ -271,7 +286,10 @@ def plot_categorical_plot(df):
                     fontsize=10,
                     fontweight="bold",
                     bbox=dict(
-                        facecolor="white", edgecolor="lightgrey", alpha=0.9, pad=1
+                        facecolor="white",
+                        edgecolor="lightgrey",
+                        alpha=0.9,
+                        pad=1
                     ),
                 )
         else:
@@ -307,7 +325,11 @@ def plot_categorical_plot(df):
 
             if not monthly_crimes.empty:
                 monthly_crimes.plot(
-                    kind="bar", stacked=True, ax=ax2, colormap="tab10", width=0.8
+                    kind="bar",
+                    stacked=True,
+                    ax=ax2,
+                    colormap="tab10",
+                    width=0.8
                 )
                 ax2.set_title(
                     "Crime Type Distribution by Month",
@@ -319,8 +341,8 @@ def plot_categorical_plot(df):
                 ax2.set_ylabel("Percentage (%)", fontsize=14, labelpad=10)
                 ax2.grid(axis="y", linestyle="--", alpha=0.7)
                 ax2.tick_params(
-                    axis="x", 
-                    labelrotation=45, 
+                    axis="x",
+                    labelrotation=45,
                     labelsize=12
                     )
             else:
@@ -382,7 +404,8 @@ def plot_statistical_plot(df):
     fig = plt.figure(figsize=(25, 20))
     gs = GridSpec(2, 2, figure=fig)
 
-    if "Month" in df.columns and not pd.api.types.is_datetime64_any_dtype(df["Month"]):
+    if ("Month" in df.columns and
+            not pd.api.types.is_datetime64_any_dtype(df["Month"])):
         df["Month"] = pd.to_datetime(df["Month"])
 
     if "Day" not in df.columns and "Month" in df.columns:
@@ -417,13 +440,13 @@ def plot_statistical_plot(df):
             )
 
     ax1.set_title(
-        "Distribution of Crime Types", 
-        fontsize=14, 
-        fontweight="bold", 
+        "Distribution of Crime Types",
+        fontsize=14,
+        fontweight="bold",
         pad=10
         )
     ax1.set_xlabel(
-        "Number of Incidents", 
+        "Number of Incidents",
         fontsize=12
         )
     ax1.set_ylabel("")
@@ -461,9 +484,9 @@ def plot_statistical_plot(df):
             )
 
         ax2.set_title(
-            "Crime Outcome Distribution", 
-            fontsize=14, 
-            fontweight="bold", 
+            "Crime Outcome Distribution",
+            fontsize=14,
+            fontweight="bold",
             pad=10
         )
         ax2.set_xlabel("Number of Cases", fontsize=12)
@@ -480,13 +503,17 @@ def plot_statistical_plot(df):
             transform=ax2.transAxes,
         )
         ax2.set_title(
-            "Crime Outcome Distribution", fontsize=14, fontweight="bold", pad=10
+            "Crime Outcome Distribution",
+            fontsize=14,
+            fontweight="bold",
+            pad=10
         )
 
     ax3 = fig.add_subplot(gs[1, 0])
 
     if "Month" in df.columns:
-        if hasattr(df["Month"].dt, "hour") and len(df["Month"].dt.hour.unique()) > 1:
+        if (hasattr(df["Month"].dt, "hour") and
+                len(df["Month"].dt.hour.unique()) > 1):
             df["Hour"] = df["Month"].dt.hour
         else:
 
@@ -527,7 +554,10 @@ def plot_statistical_plot(df):
         )
 
         ax3.set_title(
-            "Crime Frequency by Day and Hour", fontsize=14, fontweight="bold", pad=10
+            "Crime Frequency by Day and Hour",
+            fontsize=14,
+            fontweight="bold",
+            pad=10
         )
         ax3.set_xlabel("Hour of Day", fontsize=12)
         ax3.set_ylabel("Day of Week", fontsize=12)
@@ -545,7 +575,10 @@ def plot_statistical_plot(df):
             transform=ax3.transAxes,
         )
         ax3.set_title(
-            "Crime Frequency by Day and Hour", fontsize=14, fontweight="bold", pad=10
+            "Crime Frequency by Day and Hour",
+            fontsize=14,
+            fontweight="bold",
+            pad=10
         )
 
     ax4 = fig.add_subplot(gs[1, 1])
@@ -570,7 +603,10 @@ def plot_statistical_plot(df):
         median_lon = valid_data["Longitude"].median()
 
         ax4.axvline(
-            x=mean_lon, color="red", linestyle="-", label=f"Mean: {mean_lon:.4f}"
+            x=mean_lon,
+            color="red",
+            linestyle="-",
+            label=f"Mean: {mean_lon:.4f}"
         )
         ax4.axvline(
             x=median_lon,
@@ -600,7 +636,11 @@ def plot_statistical_plot(df):
                     ha="center",
                     va="top",
                     fontsize=9,
-                    bbox=dict(facecolor="white", alpha=0.7, boxstyle="round,pad=0.2"),
+                    bbox=dict(
+                        facecolor="white",
+                        alpha=0.7,
+                        boxstyle="round,pad=0.2"
+                    ),
                 )
 
         ax4.set_title(
@@ -615,7 +655,11 @@ def plot_statistical_plot(df):
         ax4.legend()
 
         ax4.axvspan(
-            uk_lon_min, uk_lon_max, alpha=0.2, color="gray", label="UK Mainland Range"
+            uk_lon_min,
+            uk_lon_max,
+            alpha=0.2,
+            color="gray",
+            label="UK Mainland Range"
         )
     else:
         ax4.text(
@@ -713,8 +757,11 @@ def preprocessing(df):
 
     initial_count = len(df)
     df = df.dropna(subset=["Longitude", "Latitude"])
+    removed_count = initial_count - len(df)
+    removed_percent = removed_count / initial_count
     print(
-        f"Removed {initial_count - len(df)} records ({(initial_count - len(df))/initial_count:.2%}) with missing location data"
+        f"Removed {removed_count} records "
+        f"({removed_percent:.2%}) with missing location data"
     )
 
     uk_lon_bounds = (-8.0, 2.0)
@@ -772,7 +819,10 @@ def preprocessing(df):
             for col1 in strong_corr.columns:
                 for col2 in strong_corr.index:
                     if strong_corr.loc[col2, col1] and col1 != col2:
-                        print(f"- {col1} and {col2}: {corr_matrix.loc[col2, col1]:.2f}")
+                        print(
+                            f"- {col1} and {col2}: "
+                            f"{corr_matrix.loc[col2, col1]:.2f}"
+                        )
     else:
         print("\nNo numeric columns for correlation analysis")
 
@@ -800,7 +850,8 @@ def writing(moments, col):
             "moderately " + ("right" if moments[2] > 0 else "left") + "-skewed"
         )
     else:
-        skewness_desc = "highly " + ("right" if moments[2] > 0 else "left") + "-skewed"
+        direction = "right" if moments[2] > 0 else "left"
+        skewness_desc = "highly " + direction + "-skewed"
 
     if moments[3] < -0.5:
         kurtosis_desc = "platykurtic"
@@ -841,10 +892,13 @@ def perform_clustering(df, col1, col2):
         sample_size = 2000
         if len(data) > sample_size:
             np.random.seed(42)
-            sample_indices = np.random.choice(len(data), sample_size, replace=False)
+            sample_indices = np.random.choice(len(data),
+                                              sample_size,
+                                              replace=False)
             data_sample = data[sample_indices]
             print(
-                f"Using {sample_size} samples for elbow method (out of {len(data)} points)"
+                f"Using {sample_size} samples for elbow method "
+                f"(out of {len(data)} points)"
             )
         else:
             data_sample = data
@@ -858,7 +912,11 @@ def perform_clustering(df, col1, col2):
 
         for k in range_of_k:
             kmeans = KMeans(
-                n_clusters=k, random_state=42, n_init=10, max_iter=100, tol=1e-4
+                n_clusters=k,
+                random_state=42,
+                n_init=10,
+                max_iter=100,
+                tol=1e-4
             )
             kmeans.fit(data_sample)
             sse.append(kmeans.inertia_)
@@ -876,19 +934,23 @@ def perform_clustering(df, col1, col2):
                     else:
                         s_score = silhouette_score(data_sample, labels)
                     silhouette_scores.append(s_score)
-                except:
+                except ValueError:
                     silhouette_scores.append(0)
                     use_silhouette = False
 
         if use_silhouette:
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
             fig.suptitle(
-                "Determining Optimal Number of Clusters", fontsize=16, fontweight="bold"
+                "Determining Optimal Number of Clusters",
+                fontsize=16,
+                fontweight="bold"
             )
         else:
             fig, ax1 = plt.subplots(figsize=(8, 6))
             fig.suptitle(
-                "Determining Optimal Number of Clusters", fontsize=16, fontweight="bold"
+                "Determining Optimal Number of Clusters",
+                fontsize=16,
+                fontweight="bold"
             )
 
         ax1.plot(
@@ -977,7 +1039,8 @@ def perform_clustering(df, col1, col2):
                 "Methodology:",
                 "- Elbow Method: Find point of diminishing returns",
                 (
-                    "- Silhouette: Higher score indicates better-defined clusters"
+                    "- Silhouette: Higher score indicates better-defined"
+                    " clusters"
                     if use_silhouette
                     else ""
                 ),
@@ -1015,15 +1078,17 @@ def perform_clustering(df, col1, col2):
 
         if len(data) > 5000 and n_clusters > 1:
             sample_size = min(5000, len(data))
-            sample_indices = np.random.choice(len(data), sample_size, replace=False)
+            sample_indices = np.random.choice(len(data), sample_size,
+                                              replace=False)
             try:
-                score = silhouette_score(data[sample_indices], labels[sample_indices])
-            except:
+                score = silhouette_score(data[sample_indices],
+                                         labels[sample_indices])
+            except ValueError:
                 score = 0
         elif n_clusters > 1:
             try:
                 score = silhouette_score(data, labels)
-            except:
+            except ValueError:
                 score = 0
         else:
             score = 0
@@ -1031,17 +1096,21 @@ def perform_clustering(df, col1, col2):
         return score, inertia, labels, kmeans.cluster_centers_
 
     if col1 not in df.columns or col2 not in df.columns:
-        raise ValueError(f"Columns {col1} and/or {col2} not found in dataframe")
+        raise ValueError(
+            f"Columns {col1} and/or {col2} not found in dataframe"
+                         )
 
     data = df[[col1, col2]].dropna()
 
     if len(data) < 3:
-        raise ValueError("Not enough data points for clustering after removing NAs")
+        raise ValueError("Not enough data points for clustering after removing"
+                         " NAs")
 
     max_analysis_size = 20000
     if len(data) > max_analysis_size:
         print(
-            f"Dataset is large ({len(data)} points). Using {max_analysis_size} sample for initial analysis."
+            f"Dataset is large ({len(data)} points). Using {max_analysis_size}"
+            "sample for initial analysis."
         )
         data_sample = data.sample(max_analysis_size, random_state=42)
     else:
@@ -1050,10 +1119,12 @@ def perform_clustering(df, col1, col2):
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(data_sample)
 
-    print(f"Determining optimal cluster count for {len(data_sample)} data points...")
+    print(f"Determining optimal cluster count for "
+          f"{len(data_sample)} data points...")
     if len(data) > 10000:
         print(
-            "Warning: Large dataset may take time to process. Using optimized approach."
+            "Warning: Large dataset may take time to process. "
+            "Using optimized approach."
         )
 
     suggested_clusters = plot_elbow_method(data_scaled)
@@ -1061,7 +1132,8 @@ def perform_clustering(df, col1, col2):
 
     if len(data) > max_analysis_size:
         print(
-            f"Applying {suggested_clusters} clusters to full dataset ({len(data)} points)"
+            f"Applying {suggested_clusters} clusters to full dataset "
+            f"({len(data)} points)"
         )
         full_data_scaled = scaler.transform(data)
 
@@ -1075,12 +1147,17 @@ def perform_clustering(df, col1, col2):
         labels = kmeans.fit_predict(full_data_scaled)
         centers = kmeans.cluster_centers_
 
+        cluster_sizes = [
+            np.sum(labels == i) for i in range(suggested_clusters)
+        ]
         print(
-            f"Clustering complete. Clusters have {[np.sum(labels == i) for i in range(suggested_clusters)]} points"
+            f"Clustering complete. Clusters have {cluster_sizes} points"
         )
     else:
-        print(f"Performing final clustering with {suggested_clusters} clusters")
-        _, _, labels, centers = one_silhouette_inertia(data_scaled, suggested_clusters)
+        print(f"Performing final clustering with "
+              f"{suggested_clusters} clusters")
+        _, _, labels, centers = one_silhouette_inertia(data_scaled,
+                                                       suggested_clusters)
 
     centers_original = scaler.inverse_transform(centers)
     xkmeans, ykmeans = centers_original[:, 0], centers_original[:, 1]
@@ -1120,13 +1197,15 @@ def plot_clustered_data(labels, data, xkmeans, ykmeans, centre_labels):
     max_display_points = 5000
     if len(data) > max_display_points:
         print(
-            f"Sampling {max_display_points} points for visualization (out of {len(data)})"
+            f"Sampling {max_display_points} points for visualization "
+            f"(out of {len(data)})"
         )
         display_indices = []
         for label in unique_labels:
             label_indices = np.where(labels == label)[0]
 
-            sample_size = int(len(label_indices) * (max_display_points / len(data)))
+            sample_size = int(len(label_indices) *
+                              (max_display_points / len(data)))
             if sample_size < 10:
                 sample_size = min(10, len(label_indices))
             if sample_size > 0:
@@ -1141,7 +1220,8 @@ def plot_clustered_data(labels, data, xkmeans, ykmeans, centre_labels):
         ax.text(
             0.5,
             0.01,
-            f"Note: Visualization shows {len(display_indices)} sampled points from {len(data)} total",
+            f"Note: Visualization shows {len(display_indices)} sampled points "
+            f"from {len(data)} total",
             transform=ax.transAxes,
             fontsize=10,
             ha="center",
@@ -1184,11 +1264,14 @@ def plot_clustered_data(labels, data, xkmeans, ykmeans, centre_labels):
             textcoords="offset points",
             fontsize=12,
             fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", alpha=0.8),
+            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black",
+                      alpha=0.8),
             arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0.2"),
         )
 
-    ax.set_title("Spatial Clustering Analysis", fontsize=20, fontweight="bold", pad=20)
+    ax.set_title("Spatial Clustering Analysis", fontsize=20,
+                 fontweight="bold",
+                 pad=20)
     ax.set_xlabel("Longitude", fontsize=16, labelpad=10)
     ax.set_ylabel("Latitude", fontsize=16, labelpad=10)
 
@@ -1253,19 +1336,25 @@ def perform_fitting(df, col1, col2):
     Returns:
     --------
     tuple
-        (data, x, y_pred, model_parameters) for the fitted data and model details
+        (data, x, y_pred, model_parameters) for the fitted
+         data and model details
     """
     if col1 not in df.columns or col2 not in df.columns:
-        raise ValueError(f"Columns {col1} and/or {col2} not found in dataframe")
+        raise ValueError(
+            f"Columns {col1} and/or {col2} not found in dataframe"
+        )
 
     data = df[[col1, col2]].dropna()
     if len(data) < 2:
-        raise ValueError("Not enough data points for fitting after removing NAs")
+        raise ValueError(
+            "Not enough data points for fitting after removing NAs"
+            )
 
     max_fitting_points = 50000
     if len(data) > max_fitting_points:
         print(
-            f"Dataset too large ({len(data)} points). Using {max_fitting_points} sample for fitting."
+            f"Dataset too large ({len(data)} points). "
+            f"Using {max_fitting_points} sample for fitting."
         )
         data = data.sample(max_fitting_points, random_state=42)
 
@@ -1304,7 +1393,8 @@ def perform_fitting(df, col1, col2):
     }
 
     print(
-        f"Linear regression results: y = {model.coef_[0]:.4f}x + {model.intercept_:.4f}"
+        f"Linear regression results: "
+        f"y = {model.coef_[0]:.4f}x + {model.intercept_:.4f}"
     )
     print(f"R² = {r2:.4f}, RMSE = {rmse:.4f}")
 
@@ -1313,7 +1403,8 @@ def perform_fitting(df, col1, col2):
 
 def plot_fitted_data(data, x, y, model_params=None):
     """
-    Plot the fitted data with the linear regression line and confidence intervals.
+    Plot the fitted data with the linear regression
+    line and confidence intervals.
     Optimized for large datasets.
 
     Parameters:
@@ -1334,14 +1425,16 @@ def plot_fitted_data(data, x, y, model_params=None):
     max_display_points = 5000
     if len(data) > max_display_points:
         print(
-            f"Sampling {max_display_points} points for visualization (out of {len(data)})"
+            f"Sampling {max_display_points} points for visualization "
+            f"(out of {len(data)})"
         )
         display_data = data.sample(max_display_points, random_state=42)
 
         ax.text(
             0.5,
             0.01,
-            f"Note: Visualization shows {max_display_points} sampled points from {len(data)} total",
+            f"Note: Visualization shows {max_display_points} sampled points "
+            f"from {len(data)} total",
             transform=ax.transAxes,
             fontsize=10,
             ha="center",
@@ -1388,9 +1481,12 @@ def plot_fitted_data(data, x, y, model_params=None):
         equation = f"y = {slope:.4f}x + {intercept:.4f}"
         stats = f"$R^2$ = {r2:.4f}, RMSE = {rmse:.4f}"
 
-        textstr = "\n".join(
-            ["Model Statistics:", equation, stats, f"n = {len(data)} data points"]
-        )
+        textstr = "\n".join([
+            "Model Statistics:",
+            equation,
+            stats,
+            f"n = {len(data)} data points"
+        ])
         props = dict(boxstyle="round", facecolor="white", alpha=0.8)
         ax.text(
             0.02,
@@ -1402,13 +1498,20 @@ def plot_fitted_data(data, x, y, model_params=None):
             bbox=props,
         )
 
-    ax.set_title("Linear Regression Analysis", fontsize=20, fontweight="bold", pad=20)
+    ax.set_title("Linear Regression Analysis",
+                 fontsize=20,
+                 fontweight="bold",
+                 pad=20)
     ax.set_xlabel(data.columns[0], fontsize=16, labelpad=10)
     ax.set_ylabel(data.columns[1], fontsize=16, labelpad=10)
 
     ax.grid(True, linestyle="--", alpha=0.7)
 
-    ax.legend(fontsize=12, loc="upper right", frameon=True, fancybox=True, shadow=True)
+    ax.legend(fontsize=12,
+              loc="upper right",
+              frameon=True,
+              fancybox=True,
+              shadow=True)
 
     for spine in ax.spines.values():
         spine.set_visible(True)
