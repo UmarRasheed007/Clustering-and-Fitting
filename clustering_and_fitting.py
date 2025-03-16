@@ -413,8 +413,16 @@ def plot_statistical_plot(df):
                 fontsize=9,
             )
 
-    ax1.set_title("Distribution of Crime Types", fontsize=14, fontweight="bold", pad=10)
-    ax1.set_xlabel("Number of Incidents", fontsize=12)
+    ax1.set_title(
+        "Distribution of Crime Types", 
+        fontsize=14, 
+        fontweight="bold", 
+        pad=10
+        )
+    ax1.set_xlabel(
+        "Number of Incidents", 
+        fontsize=12
+        )
     ax1.set_ylabel("")
     ax1.grid(axis="x", linestyle="--", alpha=0.7)
 
@@ -422,7 +430,10 @@ def plot_statistical_plot(df):
 
     if "Last outcome category" in df.columns:
         outcome_dist = (
-            df["Last outcome category"].value_counts().nlargest(8).reset_index()
+            df["Last outcome category"]
+            .value_counts()
+            .nlargest(8)
+            .reset_index()
         )
         outcome_dist.columns = ["Outcome", "Count"]
 
@@ -447,7 +458,10 @@ def plot_statistical_plot(df):
             )
 
         ax2.set_title(
-            "Crime Outcome Distribution", fontsize=14, fontweight="bold", pad=10
+            "Crime Outcome Distribution", 
+            fontsize=14, 
+            fontweight="bold", 
+            pad=10
         )
         ax2.set_xlabel("Number of Cases", fontsize=12)
         ax2.set_ylabel("")
